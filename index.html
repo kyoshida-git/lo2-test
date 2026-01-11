@@ -2,9 +2,11 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Lightning Out 2.0 with OAuth
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lightning Out 2.0 with OAuth</title>
     <style>
-        /* JSで表示/非表示を制御するために必要な最小限のスタイル */
+        #status { margin-bottom: 20px; font-weight: bold; color: #555; }
+        button:disabled { background-color: #ccc; cursor: not-allowed; }
         .hidden { display: none; }
     </style>
 </head>
@@ -16,9 +18,7 @@
 
     <!-- 
      以下 [設定] > [Lightning Out 2.0 App Manager] > (該当の Lightning Out 2.0 App) > [Copy to Clipboard] (ここを書き換えてください) からコードをコピー
-    ### Start ### 
-    ––>
-
+    ### Start ### –>
     <script src="https://ee1ysd--sb.sandbox.my.salesforce.com/lightning/lightning.out.latest/index.iife.prod.js"></script>
 
     <lightning-out-application 
@@ -29,7 +29,7 @@
     </lightning-out-application>
 
     <c-mylwc></c-mylwc>
-   <!-- ### End ### ––>
+   <!-- ### End ### –>
 
     <script>
         // ============================================================
@@ -94,10 +94,10 @@
                 // アプリIDの取得
                 const appId = loApp.getAttribute('app-id');
                 
-                // 【修正点】エンドポイントの変更
+                // frontdoor-url 取得用のエンドポイント
                 const endpoint = `${CONFIG.instanceUrl}/services/oauth2/lightningoutsingleaccess`;
 
-                // 【修正点】パラメータを x-www-form-urlencoded 形式で作成
+                // パラメータを x-www-form-urlencoded 形式で作成
                 const bodyParams = new URLSearchParams();
                 bodyParams.append('access_token', token);
                 bodyParams.append('lightning_out_app_id', appId);
@@ -105,7 +105,6 @@
                 const response = await fetch(endpoint, {
                     method: "POST",
                     headers: {
-                        // 【修正点】Content-Type の変更
                         "Content-Type": "application/x-www-form-urlencoded"
                     },
                     body: bodyParams
@@ -118,7 +117,7 @@
 
                 const data = await response.json();
                 
-                // 【修正点】レスポンスキーの変更 (frontdoorUrl -> frontdoor_uri)
+                // レスポンスキーの変更 (frontdoorUrl -> frontdoor_uri)
                 const frontdoorUrl = data.frontdoor_uri;
 
                 console.log("Frontdoor URL fetched:", frontdoorUrl);
