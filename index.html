@@ -2,18 +2,138 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Lightning Out 2.0 (Manual)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lightning Out 2.0 with OAuth</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        #status { margin-bottom: 20px; font-weight: bold; color: #555; }
+        button { padding: 10px 20px; cursor: pointer; background-color: #0070d2; color: white; border: none; border-radius: 4px; }
+        button:disabled { background-color: #ccc; cursor: not-allowed; }
+        .hidden { display: none; }
+    </style>
 </head>
-    <body>
-        <p>The below is a lwc in lightning out 2.0</p>
+<body>
+    <h3>Lightning Out 2.0 (OAuth User-Agent Flow)</h3>
+    <div id="status">Checking authentication...</div>
+    
+    <button id="loginBtn" class="hidden">Login to Salesforce</button>
 
-        <script type="text/javascript" async="" src="https://ee1ysd--sb.sandbox.my.salesforce.com/lightning/lightning.out.latest/index.iife.prod.js"></script>
+    <script src="https://ee1ysd--sb.sandbox.my.salesforce.com/lightning/lightning.out.latest/index.iife.prod.js"></script>
 
-        <lightning-out-application 
-            app-id="1UsIk0000008OI5KAM" 
-            components="c-mylwc"
-            frontdoor-url="https://ee1ysd--sb.sandbox.my.salesforce.com/secur/frontdoor.jsp?otp=00D1e0000000Mg2%21ARcAQAwXRen0ZdnihdNPnwXpmxHguno2Y1EllVj5mU6ZqfMXcQJE1UVRaAcoTDECvF9.39I_Dx6ifKbhLFUwOGDX3aNjAvl5&cshc=i000006BcyLe0000000Mg2"></lightning-out-application>
+    <lightning-out-application 
+        id="loApp"
+        app-id="1UsIk0000008OI5KAM" 
+        components="c-mylwc"
+        frontdoor-url="">
+    </lightning-out-application>
 
-        <c-mylwc></c-mylwc>
-    </body>
+    <c-mylwc></c-mylwc>
+
+
+    <script>
+        // ============================================================
+        // 設定 (ここを書き換えてください)
+        // ============================================================
+        const CONFIG = {
+            // 接続アプリケーションの「コンシューマ鍵」 (Client ID)
+            clientId: "3MVG9ZUGg10Hh227H3L_zcr7pt.C0jRcz4rFKnBYKyo3JUe1eb_2G_ZKNplX_OXvOcMNgMWbL0R0zQlWEXKc6", 
+
+            // Salesforce 組織の URL
+            instanceUrl: "https://ee1ysd--sb.sandbox.my.salesforce.com",
+
+            // このファイルのURL (接続アプリケーションのコールバックURLと完全一致させる)
+            redirectUri: "https://kyoshida-git.github.io/lo2-test/index.html"
+        };
+
+        // ============================================================
+        // ロジック
+        // ============================================================
+        const statusEl = document.getElementById('status');
+        const loginBtn = document.getElementById('loginBtn');
+        const loApp = document.getElementById('loApp');
+
+        // ページ読み込み時の処理
+        document.addEventListener('DOMContentLoaded', async () => {
+            // URLハッシュからアクセストークンを探す
+            const accessToken = getAccessTokenFromHash();
+
+            if (accessToken) {
+                // トークンがある場合 -> frontdoor-url を取得して表示開始
+                statusEl.textContent = "Access Token found. Fetching frontdoor URL...";
+                history.replaceState(null, null, ' '); // URLからトークンを消す
+                await initializeLightningOut(accessToken);
+            } else {
+                // トークンがない場合 -> ログインボタンを表示
+                statusEl.textContent = "Please login to load the component.";
+                loginBtn.classList.remove('hidden');
+                loginBtn.onclick = startOAuthFlow;
+            }
+        });
+
+        // OAuth認証の開始 (Salesforceへリダイレクト)
+        function startOAuthFlow() {
+            const authUrl = `${CONFIG.instanceUrl}/services/oauth2/authorize` +
+                `?response_type=token` +
+                `&client_id=${encodeURIComponent(CONFIG.clientId)}` +
+                `&redirect_uri=${encodeURIComponent(CONFIG.redirectUri)}`;
+            
+            window.location.href = authUrl;
+        }
+
+        // URLハッシュから access_token を抽出
+        function getAccessTokenFromHash() {
+            const hash = window.location.hash.substring(1);
+            const params = new URLSearchParams(hash);
+            return params.get('access_token');
+        }
+
+        // API をコールして frontdoor-url を取得し、タグにセット
+        async function initializeLightningOut(token) {
+            try {
+                // アプリIDの取得
+                const appId = loApp.getAttribute('app-id');
+                
+                // 【修正点】エンドポイントの変更
+                const endpoint = `${CONFIG.instanceUrl}/services/oauth2/lightningoutsingleaccess`;
+
+                // 【修正点】パラメータを x-www-form-urlencoded 形式で作成
+                const bodyParams = new URLSearchParams();
+                bodyParams.append('access_token', token);
+                bodyParams.append('lightning_out_app_id', appId);
+
+                const response = await fetch(endpoint, {
+                    method: "POST",
+                    headers: {
+                        // 【修正点】Content-Type の変更
+                        "Content-Type": "application/x-www-form-urlencoded"
+                    },
+                    body: bodyParams
+                });
+
+                if (!response.ok) {
+                    const errText = await response.text();
+                    throw new Error(`API Error: ${response.status} ${response.statusText} - ${errText}`);
+                }
+
+                const data = await response.json();
+                
+                // 【修正点】レスポンスキーの変更 (frontdoorUrl -> frontdoor_uri)
+                const frontdoorUrl = data.frontdoor_uri;
+
+                console.log("Frontdoor URL fetched:", frontdoorUrl);
+                statusEl.textContent = "Component loaded successfully.";
+
+                // lightning-out-application タグに URL をセット
+                loApp.setAttribute('frontdoor-url', frontdoorUrl);
+
+            } catch (err) {
+                console.error(err);
+                statusEl.textContent = "Error: " + err.message;
+                // エラー時は再ログインを促す
+                loginBtn.textContent = "Retry Login";
+                loginBtn.classList.remove('hidden');
+            }
+        }
+    </script>
+</body>
 </html>
