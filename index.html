@@ -2,7 +2,15 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lightning Out 2.0 with OAuth</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        #status { margin-bottom: 20px; font-weight: bold; color: #555; }
+        button { padding: 10px 20px; cursor: pointer; background-color: #0070d2; color: white; border: none; border-radius: 4px; }
+        button:disabled { background-color: #ccc; cursor: not-allowed; }
+        .hidden { display: none; }
+    </style>
 </head>
 <body>
     <h3>Lightning Out 2.0 (OAuth User-Agent Flow)</h3>
@@ -10,10 +18,9 @@
     
     <button id="loginBtn" class="hidden">Login to Salesforce</button>
 
-    <!--
-    以下 [設定] > [Lightning Out 2.0 App Manager] > (該当の Lightning Out 2.0 App) > [Copy to Clipboard] (ここを書き換えてください) からコードをコピー
-    ### Start ###
-    -->
+    <!-- 
+     以下 [設定] > [Lightning Out 2.0 App Manager] > (該当の Lightning Out 2.0 App) > [Copy to Clipboard] (ここを書き換えてください) からコードをコピー
+    ### Start ### -->
     <script src="https://ee1ysd--sb.sandbox.my.salesforce.com/lightning/lightning.out.latest/index.iife.prod.js"></script>
 
     <lightning-out-application 
@@ -24,7 +31,7 @@
     </lightning-out-application>
 
     <c-mylwc></c-mylwc>
-    <!-- ### End ###>
+   <!-- ### End ### –>
 
     <script>
         // ============================================================
