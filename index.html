@@ -12,8 +12,18 @@
     components="c-helloWorldInLO2"
     frontdoor-url="https://ee1ysd--sb.sandbox.my.salesforce.com/secur/frontdoor.jsp?otp=00D1e0000000Mg2%21ARcAQIlm3L2pTnEdDnKnFd4ijDuyWPI4Dz20dBWaiK8vMDjzvB1UNqS8qc1NWBjHDAR.heuX8VgoIkJcGj9mnYlgH_KKjGft&cshc=i000006BcyLe0000000Mg2">
     
-    </lightning-out-application>
-<c-helloWorldInLO2></c-helloWorldInLO2>
+</lightning-out-application>
+<c-helloWorldInLO2>
+    <iframe>
+      <html>
+        <!-- Salesforce context -->
+        <body>
+          <!-- Lightning web component -->
+          <c-helloWorldInLO2></c-helloWorldInLO2>
+        </body>
+      </html>
+    </iframe>
+</c-helloWorldInLO2>
       
     </body>
 </html>
